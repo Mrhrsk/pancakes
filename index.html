@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Специальный опрос</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(145deg, #ede9ff 0%, #e5f5ee 55%, #fce5f5 100%);
+      background-attachment: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 520px; height: 520px;
+      background: rgba(126, 196, 160, 0.14);
+      top: -160px; left: -160px;
+      filter: blur(90px);
+    }
+    body::after {
+      width: 460px; height: 460px;
+      background: rgba(168, 143, 212, 0.14);
+      bottom: -120px; right: -120px;
+      filter: blur(90px);
+    }
+
+    #app {
+      width: 100%;
+      max-width: 460px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; }
+    .screen.active {
+      display: block;
+      animation: fadeUp 0.42s ease both;
+    }
+    .screen.out {
+      display: block;
+      animation: fadeOut 0.22s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-16px); }
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: #fff;
+      border-radius: 28px;
+      padding: 40px 36px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04), 0 16px 48px rgba(100,80,180,0.10);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #7ec4a0, #7bbdcc, #a88fd4, #d498b8);
+    }
+
+    /* ── TYPOGRAPHY ── */
+    .icon  { font-size: 2.8rem; display: block; text-align: center; margin-bottom: 18px; }
+    .title { font-size: 1.7rem; font-weight: 800; color: #24213a; text-align: center; margin-bottom: 12px; line-height: 1.25; }
+    .desc  { font-size: 0.92rem; color: #8880a0; text-align: center; line-height: 1.75; margin-bottom: 22px; }
+    .muted { font-size: 0.78rem; color: #c0bcd8; text-align: center; margin-bottom: 22px; }
+
+    /* ── INPUT ── */
+    .field {
+      width: 100%;
+      padding: 13px 18px;
+      border: 2px solid #e8e2f8;
+      border-radius: 14px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #24213a;
+      background: #faf8ff;
+      outline: none;
+      margin-bottom: 14px;
+      transition: border-color .25s, box-shadow .25s;
+    }
+    .field:focus { border-color: #a88fd4; box-shadow: 0 0 0 3px rgba(168,143,212,.15); }
+    .field::placeholder { color: #c8c4e0; font-weight: 400; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-block;
+      padding: 13px 28px;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+      letter-spacing: .2px;
+    }
+    .btn:active { transform: scale(.96) !important; }
+    .btn-g {
+      background: linear-gradient(135deg, #7ec4a0, #6cb4c0);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(100,185,150,.30);
+    }
+    .btn-g:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(100,185,150,.45); }
+    .btn-v {
+      background: linear-gradient(135deg, #b09de0, #9080cc);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(155,130,210,.30);
+    }
+    .btn-v:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(155,130,210,.45); }
+    .btn-full { width: 100%; text-align: center; }
+
+    /* ── PROGRESS ── */
+    .prog-wrap { width: 100%; height: 5px; background: #f0eaff; border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
+    .prog-fill  { height: 100%; background: linear-gradient(90deg, #7ec4a0, #7bbdcc, #a88fd4); border-radius: 10px; transition: width .4s ease; }
+
+    .q-label { font-size: 0.74rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #b5b0cc; margin-bottom: 12px; }
+    .q-text  { font-size: 1.12rem; font-weight: 700; color: #24213a; line-height: 1.45; margin-bottom: 18px; }
+
+    /* ── OPTIONS ── */
+    .opts { display: flex; flex-direction: column; gap: 8px; }
+    .opt {
+      padding: 12px 16px;
+      border: 2px solid #ede8f8;
+      border-radius: 13px;
+      background: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.87rem;
+      font-weight: 600;
+      color: #24213a;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .18s, background .18s, transform .18s;
+    }
+    .opt:hover  { border-color: #a88fd4; background: #faf7ff; transform: translateX(3px); }
+    .opt.chosen { border-color: #7ec4a0; background: #f0faf5; color: #2a7a5a; }
+
+    /* ── PRIZE BOX ── */
+    .pbox { background: linear-gradient(135deg, #f8f5ff, #f0faf5); border: 2px solid #ebe4f8; border-radius: 18px; padding: 20px 24px; margin-bottom: 22px; text-align: center; }
+    .pbox-big   { font-size: 1.05rem; font-weight: 700; color: #24213a; line-height: 1.55; }
+    .pbox-small { font-size: 0.78rem; color: #a098c0; margin-top: 6px; font-weight: 500; }
+
+    /* ── INFO CARDS ── */
+    .ic-label   { font-size: 0.72rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #a88fd4; text-align: center; margin-bottom: 12px; }
+    .ic-icon    { font-size: 2.6rem; display: block; text-align: center; margin-bottom: 12px; }
+    .ic-value   { font-size: 2rem; font-weight: 800; color: #24213a; text-align: center; margin-bottom: 6px; }
+    .ic-sub     { font-size: 0.83rem; color: #c0bcd8; text-align: center; margin-bottom: 28px; }
+    .ic-btn-row { text-align: center; }
+
+    .dots { display: flex; gap: 6px; justify-content: center; margin-top: 18px; }
+    .dot  { width: 7px; height: 7px; border-radius: 50%; background: #e5e0f5; transition: all .3s; }
+    .dot.on { background: #a88fd4; width: 22px; border-radius: 4px; }
+
+    /* ── FINAL QUESTION ── */
+    .yes-row { display: flex; gap: 12px; justify-content: center; margin-top: 26px; flex-wrap: wrap; }
+
+    /* ── "НЕТ" BUTTON ── */
+    #nope {
+      position: fixed;
+      bottom: 240px;
+      right: 14vw;
+      background: transparent;
+      border: 2px solid #e87a7a;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #e06060;
+      cursor: pointer;
+      padding: 10px 22px;
+      display: none;
+      z-index: 9999;
+      border-radius: 50px;
+      transition: color .2s, background .2s, border-color .2s, box-shadow .2s;
+    }
+    #nope:hover {
+      background: rgba(232, 100, 100, 0.07);
+      border-color: #d05050;
+      color: #c04040;
+      box-shadow: 0 4px 14px rgba(220, 80, 80, 0.2);
+    }
+
+    /* ── STATUS TOAST (для дебага, если нужно) ── */
+    #toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: #2a2740;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 50px;
+      z-index: 9998;
+      opacity: 0;
+      transition: all .35s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 480px) {
+      .card { padding: 30px 22px; }
+      .title { font-size: 1.45rem; }
+      .yes-row { flex-direction: column; }
+      .yes-row .btn { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- 0: NAME -->
+  <div class="screen active" id="s0">
+    <div class="card">
+      <span class="icon">👋</span>
+      <h1 class="title">Добро пожаловать</h1>
+      <p class="desc">Вы были выбраны для прохождения специального опроса. Введите ваше имя, чтобы начать.</p>
+      <input class="field" id="name-in" type="text" placeholder="Ваше имя..." maxlength="30" autocomplete="off" autofocus>
+      <button class="btn btn-g btn-full" onclick="doStart()">Начать →</button>
+    </div>
+  </div>
+
+  <!-- 1: WELCOME -->
+  <div class="screen" id="s1">
+    <div class="card">
+      <span class="icon">✨</span>
+      <h1 class="title" id="wname">Привет, Алина!</h1>
+      <p class="desc">Поздравляем! Ты была отобрана для участия в очень важном исследовании. Займёт буквально пару минут.</p>
+      <p class="muted">🎁 В конце тебя ждёт приз</p>
+      <button class="btn btn-g btn-full" onclick="initQuiz()">Ладно, давай!</button>
+    </div>
+  </div>
+
+  <!-- 2: QUIZ -->
+  <div class="screen" id="s2">
+    <div class="card">
+      <div class="prog-wrap"><div class="prog-fill" id="pb" style="width:20%"></div></div>
+      <div class="q-label" id="ql">Вопрос 1 из 5</div>
+      <div class="q-text"  id="qt"></div>
+      <div class="opts"    id="qo"></div>
+    </div>
+  </div>
+
+  <!-- 3: RESULT -->
+  <div class="screen" id="s3">
+    <div class="card">
+      <span class="icon">🏆</span>
+      <h1 class="title">Молодец!</h1>
+      <p class="desc">Ты блестяще прошла опрос. Наша команда тщательно проанализировала твои ответы.</p>
+      <div class="pbox">
+        <div class="pbox-big">🎁 Ты выиграла приз!</div>
+        <div class="pbox-small">Нажми, чтобы узнать подробности</div>
+      </div>
+      <button class="btn btn-v btn-full" onclick="go('s4')">Получить приз!</button>
+    </div>
+  </div>
+
+  <!-- 4: PRIZE REVEAL -->
+  <div class="screen" id="s4">
+    <div class="card">
+      <span class="icon">🎉</span>
+      <h1 class="title">Ваш приз</h1>
+      <p class="desc">Внимание — официальное уведомление. Для получения вашего приза...</p>
+      <div class="pbox" style="margin-bottom:26px;">
+        <div class="pbox-big">Мирас приглашает вас на совместную прогулку ☀️</div>
+      </div>
+      <button class="btn btn-g btn-full" onclick="initCards()">Продолжить</button>
+    </div>
+  </div>
+
+  <!-- 5: INFO CARDS -->
+  <div class="screen" id="s5">
+    <div class="card">
+      <div class="ic-label" id="ic-l"></div>
+      <span class="ic-icon" id="ic-i"></span>
+      <div class="ic-value"  id="ic-v"></div>
+      <div class="ic-sub"    id="ic-s"></div>
+      <div class="ic-btn-row">
+        <button class="btn btn-g" id="ic-btn" onclick="nextCard()">Далее →</button>
+      </div>
+      <div class="dots" id="dots"></div>
+    </div>
+  </div>
+
+  <!-- 6: FINAL QUESTION -->
+  <div class="screen" id="s6">
+    <div class="card">
+      <span class="icon">🌿</span>
+      <h1 class="title">Вы согласны?</h1>
+      <p class="desc">Подумайте хорошенько. Хотя правильный ответ, кажется, очевиден.</p>
+      <div class="yes-row">
+        <button class="btn btn-g" onclick="sayYes('Да')">Да ✓</button>
+        <button class="btn btn-v" onclick="sayYes('Конечно!')">Конечно! ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7: YES -->
+  <div class="screen" id="s7">
+    <div class="card">
+      <span class="icon">🥳</span>
+      <h1 class="title">Отлично!</h1>
+      <p class="desc">Мы тебя ждём. Обещаем, что будет классно. До скорой встречи 🌿</p>
+    </div>
+  </div>
+
+  <!-- 8: NO (4th time) -->
+  <div class="screen" id="s8">
+    <div class="card">
+      <span class="icon">📦</span>
+      <h1 class="title">Ну что ж...</h1>
+      <p class="desc">В таком случае приз будет отправлен вам курьером в течение 1-5 рабочих дней.</p>
+      <p class="muted" style="margin-top:8px;">Спасибо за прохождение опроса! Всего наилучшего!</p>
+    </div>
+  </div>
+
+</div>
+
+<button id="nope" onclick="doNope()">нет</button>
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════
+   КОНФИГ — вставить URL после деплоя Apps Script
+   ════════════════════════════════════════════════ */
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzSBibLT-txY66340WzWqB5BIJ9K8WWdIgIPVLq0jhJYF3RNCoHlzGLQ8owa7LDxtxnfQ/exec';   // <-- сюда URL вида https://script.google.com/macros/s/.../exec
+
+/* ── DATA ── */
+const QS = [
+  {
+    t: "Что ты делаешь сразу после пробуждения?",
+    o: ["А) Сразу встаю — я очень продуктивная","Б) Лежу ещё 20 минут (потом ещё 20, и ещё...)","В) Смотрю телефон, не открывая глаза","Г) Я? Не сплю вообще. Это миф."]
+  },
+  {
+    t: "Сколько вкладок браузера сейчас открыто?",
+    o: ["А) 1–3 — я организованный человек","Б) 4–10 — стандартный рабочий набор","В) 11–30 — мне так комфортно, отстань","Г) Браузер уже написал завещание"]
+  },
+  {
+    t: "Как ты обычно планируешь выходные?",
+    o: ["А) Расписываю по часам заранее","Б) Примерный план, но гибко","В) Придумываю в субботу в 14:00","Г) Диван сам всё решит"]
+  },
+  {
+    t: "Если бы ты была напитком, то каким?",
+    o: ["А) Капучино — тёплая и всеми любимая","Б) Матча латте — загадочная и модная","В) Зелёный смузи — здоровая и правильная","Г) Газировка — всегда с пузырьками"]
+  },
+  {
+    t: "Во сколько ты обычно ложишься спать?",
+    o: ["А) В 22:00 — сплю как праведник","Б) В полночь — всё под контролем","В) В 2 ночи — типичная история","Г) Сон? Не слышала такого слова"]
+  }
+];
+
+const CARDS = [
+  { l: "Дата",          i: "📅", v: "TBD", s: "скоро уточним!" },
+  { l: "Время",         i: "🕐", v: "TBD", s: "не опоздай!" },
+  { l: "Место встречи", i: "📍", v: "TBD", s: "будет сюрприз" },
+  { l: "Дресс-код",     i: "✨", v: "TBD", s: "выглядеть красиво — и точка" }
+];
+
+/* ── STATE ── */
+let qi = 0, ci = 0, nc = 0;
+let busy = false;
+
+// Лог для отправки в таблицу
+const log = { name: '', a1: '', a2: '', a3: '', a4: '', a5: '', final: '' };
+
+/* ── SEND TO GOOGLE SHEETS ── */
+function sendToSheet() {
+  if (!WEBHOOK_URL) return; // нет URL — молча пропускаем
+  fetch(WEBHOOK_URL, {
+    method: 'POST',
+    mode:   'no-cors',    // Google Apps Script принимает без CORS-заголовков
+    body:   JSON.stringify(log)
+  }).catch(() => {});     // ошибки не показываем пользователю
+}
+
+/* ── TOAST (для тебя при тестировании) ── */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ── NAVIGATION ── */
+function go(id) {
+  if (busy) return;
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!next || prev === next) return;
+  const nope = document.getElementById('nope');
+  if (prev) {
+    busy = true;
+    prev.classList.add('out');
+    setTimeout(() => {
+      prev.classList.remove('active', 'out');
+      next.classList.add('active');
+      nope.style.display = (id === 's6') ? 'block' : 'none';
+      busy = false;
+    }, 220);
+  } else {
+    next.classList.add('active');
+    nope.style.display = (id === 's6') ? 'block' : 'none';
+  }
+}
+
+/* ── NAME ── */
+function doStart() {
+  const v = document.getElementById('name-in').value.trim();
+  if (v) log.name = v;
+  document.getElementById('wname').textContent = `Привет, ${log.name || 'Алина'}!`;
+  go('s1');
+}
+document.getElementById('name-in').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doStart();
+});
+
+/* ── QUIZ ── */
+function initQuiz() {
+  qi = 0;
+  renderQ();
+  go('s2');
+}
+
+function renderQ() {
+  const q   = QS[qi];
+  const tot = QS.length;
+  document.getElementById('pb').style.width = `${Math.round((qi + 1) / tot * 100)}%`;
+  document.getElementById('ql').textContent  = `Вопрос ${qi + 1} из ${tot}`;
+  document.getElementById('qt').textContent  = q.t;
+  const oc = document.getElementById('qo');
+  oc.innerHTML = '';
+  q.o.forEach(op => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.textContent = op;
+    b.onclick = () => pickOpt(b, op);
+    oc.appendChild(b);
+  });
+}
+
+function pickOpt(el, text) {
+  document.querySelectorAll('.opt').forEach(o => o.style.pointerEvents = 'none');
+  el.classList.add('chosen');
+  // Сохранить ответ
+  log[`a${qi + 1}`] = text;
+  setTimeout(() => {
+    qi++;
+    qi < QS.length ? renderQ() : go('s3');
+  }, 400);
+}
+
+/* ── INFO CARDS ── */
+function initCards() {
+  ci = 0;
+  const dc = document.getElementById('dots');
+  dc.innerHTML = '';
+  CARDS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' on' : '');
+    dc.appendChild(d);
+  });
+  renderCard();
+  go('s5');
+}
+
+function renderCard() {
+  const c = CARDS[ci];
+  document.getElementById('ic-l').textContent   = c.l;
+  document.getElementById('ic-i').textContent   = c.i;
+  document.getElementById('ic-v').textContent   = c.v;
+  document.getElementById('ic-s').textContent   = c.s;
+  document.getElementById('ic-btn').textContent = ci === CARDS.length - 1 ? 'Готово ✓' : 'Далее →';
+  document.querySelectorAll('.dot').forEach((d, i) => {
+    d.className = 'dot' + (i === ci ? ' on' : '');
+  });
+}
+
+function nextCard() {
+  ci++;
+  if (ci < CARDS.length) {
+    renderCard();
+  } else {
+    nc = 0;
+    const nope = document.getElementById('nope');
+    nope.style.left   = 'auto';
+    nope.style.top    = 'auto';
+    nope.style.right  = '14vw';
+    nope.style.bottom = '240px';
+    nope.style.fontSize   = '1rem';
+    nope.style.color      = '#e06060';
+    nope.style.border     = '2px solid #e87a7a';
+    nope.style.padding    = '10px 22px';
+    go('s6');
+  }
+}
+
+/* ── FINAL QUESTION ── */
+function doNope() {
+  nc++;
+  const btn = document.getElementById('nope');
+
+  if (nc >= 4) {
+    btn.style.display = 'none';
+    log.final = 'Отказалась';
+    sendToSheet();
+    go('s8');
+    return;
+  }
+
+  // Телепортация в случайное место экрана
+  const pad = 60;
+  const x = pad + Math.random() * (window.innerWidth  - btn.offsetWidth  - pad * 2);
+  const y = pad + Math.random() * (window.innerHeight - btn.offsetHeight - pad * 2);
+  btn.style.left   = x + 'px';
+  btn.style.top    = y + 'px';
+  btn.style.right  = 'auto';
+  btn.style.bottom = 'auto';
+
+  // С каждым разом чуть крупнее и краснее
+  const SIZES   = ['1.05rem', '1.15rem', '1.3rem'];
+  const COLORS  = ['#d05050',  '#bf3535',  '#aa2020'];
+  const BORDERS = ['#d05050',  '#bf3535',  '#aa2020'];
+  btn.style.fontSize   = SIZES[nc - 1];
+  btn.style.color      = COLORS[nc - 1];
+  btn.style.borderColor = BORDERS[nc - 1];
+}
+
+function sayYes(type) {
+  document.getElementById('nope').style.display = 'none';
+  log.final = type;
+  sendToSheet();
+  go('s7');
+}
+</script>
+</body>
+</html>
