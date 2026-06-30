@@ -183,7 +183,7 @@
     /* ── "НЕТ" BUTTON ── */
     #nope {
       position: fixed;
-      bottom: 240px;
+      bottom: 300px;
       right: 14vw;
       background: transparent;
       border: 2px solid #e87a7a;
@@ -288,7 +288,7 @@
     <div class="card">
       <span class="icon">🎉</span>
       <h1 class="title">Ваш приз</h1>
-      <p class="desc">Внимание — официальное уведомление. Для получения вашего приза...</p>
+      <p class="desc">Внимание! Чтобы получить ваш приз...</p>
       <div class="pbox" style="margin-bottom:26px;">
         <div class="pbox-big">Мирас приглашает вас на совместную прогулку ☀️</div>
       </div>
@@ -378,10 +378,9 @@ const QS = [
 ];
 
 const CARDS = [
-  { l: "Дата",          i: "📅", v: "TBD", s: "скоро уточним!" },
-  { l: "Время",         i: "🕐", v: "TBD", s: "не опоздай!" },
-  { l: "Место встречи", i: "📍", v: "TBD", s: "будет сюрприз" },
-  { l: "Дресс-код",     i: "✨", v: "TBD", s: "выглядеть красиво — и точка" }
+  { l: "Дата и Время",  i: "📅", v: "3 Июля, 14:00", s: "открыто для обсуждения" },
+  { l: "Место", i: "📍", v: "Funky Town", s: "вспомним детство, думаю будет весело😁" },
+  { l: "Дресс-код",     i: "✨", v: "комфортный и удобный", s: "Подлецу все к лицу😉" }
 ];
 
 /* ── STATE ── */
@@ -513,7 +512,7 @@ function nextCard() {
     nope.style.left   = 'auto';
     nope.style.top    = 'auto';
     nope.style.right  = '14vw';
-    nope.style.bottom = '240px';
+    nope.style.bottom = '300px';
     nope.style.fontSize   = '1rem';
     nope.style.color      = '#e06060';
     nope.style.border     = '2px solid #e87a7a';
